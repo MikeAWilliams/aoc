@@ -3,14 +3,15 @@ use std::fs;
 fn main() {
     //let input = get_input_from_file("example_input.txt");
     let input = get_input_from_file("problem_input.txt");
-    print_raw_data(&input);
+
+    println!("Total points for p2 {}", solve_problem_one(&input))
+}
+
+fn solve_problem_one(input:&Vec<Vec<String>>)->i32{
     let translators = [other_player_translate, my_translate];
     let game_moves = get_game_moves(&input, &translators);
-    print_game_moves(&game_moves);
     let game_results = get_game_results(&game_moves);
-    print_game_results(&game_results);
-
-    println!("Total points for p2 {}", get_total_p2_score(&game_moves, &game_results));
+    get_total_p2_score(&game_moves, &game_results)
 }
 
 fn print_raw_data(input: &Vec<Vec<String>>){
@@ -134,4 +135,21 @@ fn get_p2_score(game: &Vec<GameMove>, result:&GameResult)->i32{
 
 fn get_total_p2_score(moves:&Vec<Vec<GameMove>>, points:&Vec<GameResult>)->i32{
     moves.iter().zip(points.iter()).map(|tup|get_p2_score(tup.0, tup.1)).sum()
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    #[test]
+    fn example_input_works() {
+        let input = get_input_from_file("example_input.txt");
+        assert_eq!(15, solve_problem_one(&input))
+    }
+
+    #[test]
+    fn problem_input_works() {
+        let input = get_input_from_file("problem_input.txt");
+        assert_eq!(13484, solve_problem_one(&input))
+    }
 }
