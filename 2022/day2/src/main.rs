@@ -225,5 +225,6 @@ mod tests {
     fn problem_input_works() {
         let input = get_input_from_file("problem_input.txt");
         assert_eq!(13484, solve_problem_one(&input));
+        assert_eq!(13433, solve_problem_two(&input));
     }
 }
