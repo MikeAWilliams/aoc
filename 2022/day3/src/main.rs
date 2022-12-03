@@ -2,13 +2,27 @@ use std::{fs, collections::HashSet};
 use substring::Substring;
 
 fn main() {
-    let input = get_input_from_file("problem_input.txt");
-    //let input = get_input_from_file("example_input.txt");
-    println!("total priority {}", solve_problem_one(&input));
+    //let input = get_input_from_file("problem_input.txt");
+    let input = get_input_from_file("example_input.txt");
+    println!("total priority part 1 {}", solve_problem_one(&input));
+    println!("total priority part 2 {}", solve_problem_two(&input));
 }
 
 fn get_input_from_file(file: &str) -> Vec<String> {
     fs::read_to_string(file).unwrap().split(|c|'\n' == c).map(|item|item.to_string()).collect()
+}
+
+fn solve_problem_two(input: &Vec<String>) -> i32 {
+    input.chunks(3).into_iter().map(|chunk|{
+        let set0 = chunk[0].chars().collect::<HashSet<char>>();
+        let set1 = chunk[1].chars().collect::<HashSet<char>>();
+        let set2 = chunk[2].chars().collect::<HashSet<char>>();
+        let commonChars01 = set0.intersection(&set1).map(|item| *item).collect::<HashSet<char>>();
+        let commonChars = commonChars01.intersection(&set2).collect::<Vec<&char>>();
+        commonChars[0].clone()
+    }).map(|badge|{
+        char_to_priority(badge)
+    }).sum()
 }
 
 fn solve_problem_one(input: &Vec<String>) -> i32 {
@@ -41,12 +55,13 @@ mod tests {
     fn example_input_works() {
         let input = get_input_from_file("example_input.txt");
         assert_eq!(157, solve_problem_one(&input));
-        //assert_eq!(12, solve_problem_two(&input));
+        assert_eq!(70, solve_problem_two(&input));
     }
 
-    //#[test]
-    //fn problem_input_works() {
-        //let input = get_input_from_file("problem_input.txt");
-        //assert_eq!(13484, solve_problem_one(&input));
-    //}
+    #[test]
+    fn problem_input_works() {
+        let input = get_input_from_file("problem_input.txt");
+        assert_eq!(7581, solve_problem_one(&input));
+        assert_eq!(2525, solve_problem_two(&input));
+    }
 }
