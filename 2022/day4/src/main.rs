@@ -7,28 +7,33 @@ fn main() {
     println!("Problem 2 {}", solve_problem_two(&input));
 }
 
-fn elf_pair_is_redundant(first_start:i32, first_stop:i32, second_start:i32, second_stop:i32)->bool{
-    (first_start >= second_start && first_stop <= second_stop) ||
-    (second_start >= first_start && second_stop <= first_stop)
+fn elf_pair_is_redundant(first:&work_indices, second:&work_indices)->bool{
+    (first.start >= second.start && first.stop <= second.stop) ||
+    (second.start >= first.start && second.stop <= first.stop)
 }
 
-fn elf_pair_overlaps(first_start:i32, first_stop:i32, second_start:i32, second_stop:i32)->bool{
-    elf_pair_is_redundant(first_start, first_stop, second_start, second_stop)||(
-        (first_stop >= second_start && first_stop <= second_stop) ||
-        (second_stop >= first_start && second_stop <= first_stop)
+fn elf_pair_overlaps(first:&work_indices, second:&work_indices)->bool{
+    elf_pair_is_redundant(first, second)||(
+        (first.stop >= second.start && first.stop <= second.stop) ||
+        (second.stop >= first.start && second.stop <= first.stop)
     )
+}
+
+struct work_indices{
+    pub start:i32,
+    pub stop:i32,
+}
+
+fn get_work_indices(input:&Vec<i32>)-> work_indices{
+    work_indices { start: input[0], stop: input[1] }
 }
 
 fn solve_problem_one(input: &Vec<Vec<Vec<i32>>>) -> i32 {
     input.iter().map(|elf_pair|{
-    let first = &elf_pair[0];
-    let first_start = first[0];
-    let first_stop = first[1];
+        let first = get_work_indices(&elf_pair[0]);
+        let second = get_work_indices(&elf_pair[1]);
 
-    let second = &elf_pair[1];
-    let second_start = second[0];
-    let second_stop = second[1];
-    if elf_pair_is_redundant(first_start, first_stop, second_start, second_stop){
+    if elf_pair_is_redundant(&first,&second){
         1
     } else {
         0
@@ -38,14 +43,9 @@ fn solve_problem_one(input: &Vec<Vec<Vec<i32>>>) -> i32 {
 
 fn solve_problem_two(input: &Vec<Vec<Vec<i32>>>) -> i32 {
     input.iter().map(|elf_pair|{
-        let first = &elf_pair[0];
-        let first_start = first[0];
-        let first_stop = first[1];
-
-        let second = &elf_pair[1];
-        let second_start = second[0];
-        let second_stop = second[1];
-        if elf_pair_overlaps(first_start, first_stop, second_start, second_stop){
+        let first = get_work_indices(&elf_pair[0]);
+        let second = get_work_indices(&elf_pair[1]);
+        if elf_pair_overlaps(&first,&second){
             1
         } else {
             0
