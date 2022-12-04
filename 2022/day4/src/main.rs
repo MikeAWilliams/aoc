@@ -24,32 +24,31 @@ struct work_indices{
     pub stop:i32,
 }
 
+fn score_elf_par(pair_as_vec:&Vec<Vec<i32>>, predicate: fn(&work_indices,&work_indices)->bool)->i32{
+        let first = get_work_indices(&pair_as_vec[0]);
+        let second = get_work_indices(&pair_as_vec[1]);
+
+    if predicate(&first,&second){
+        1
+    } else {
+        0
+    }
+
+}
+
 fn get_work_indices(input:&Vec<i32>)-> work_indices{
     work_indices { start: input[0], stop: input[1] }
 }
 
 fn solve_problem_one(input: &Vec<Vec<Vec<i32>>>) -> i32 {
     input.iter().map(|elf_pair|{
-        let first = get_work_indices(&elf_pair[0]);
-        let second = get_work_indices(&elf_pair[1]);
-
-    if elf_pair_is_redundant(&first,&second){
-        1
-    } else {
-        0
-    }
+        score_elf_par(elf_pair, elf_pair_is_redundant)
    }).sum()
 }
 
 fn solve_problem_two(input: &Vec<Vec<Vec<i32>>>) -> i32 {
     input.iter().map(|elf_pair|{
-        let first = get_work_indices(&elf_pair[0]);
-        let second = get_work_indices(&elf_pair[1]);
-        if elf_pair_overlaps(&first,&second){
-            1
-        } else {
-            0
-        }
+        score_elf_par(elf_pair, elf_pair_overlaps)
     }).sum()
 }
 
