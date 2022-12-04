@@ -12,6 +12,13 @@ fn elf_pair_is_redundant(first_start:i32, first_stop:i32, second_start:i32, seco
     (second_start >= first_start && second_stop <= first_stop)
 }
 
+fn elf_pair_overlaps(first_start:i32, first_stop:i32, second_start:i32, second_stop:i32)->bool{
+    elf_pair_is_redundant(first_start, first_stop, second_start, second_stop)||(
+        (first_stop >= second_start && first_stop <= second_stop) ||
+        (second_stop >= first_start && second_stop <= first_stop)
+    )
+}
+
 fn solve_problem_one(input: &Vec<Vec<Vec<i32>>>) -> i32 {
     input.iter().map(|elf_pair|{
     let first = &elf_pair[0];
@@ -29,8 +36,21 @@ fn solve_problem_one(input: &Vec<Vec<Vec<i32>>>) -> i32 {
    }).sum()
 }
 
-fn solve_problem_two(_input: &Vec<Vec<Vec<i32>>>) -> i32 {
-    0
+fn solve_problem_two(input: &Vec<Vec<Vec<i32>>>) -> i32 {
+    input.iter().map(|elf_pair|{
+        let first = &elf_pair[0];
+        let first_start = first[0];
+        let first_stop = first[1];
+
+        let second = &elf_pair[1];
+        let second_start = second[0];
+        let second_stop = second[1];
+        if elf_pair_overlaps(first_start, first_stop, second_start, second_stop){
+            1
+        } else {
+            0
+        }
+    }).sum()
 }
 
 fn get_input_from_file(file: &str) -> Vec<Vec<Vec<i32>>> {
@@ -54,13 +74,13 @@ mod tests {
     fn example_input_works() {
         let input = get_input_from_file("example_input.txt");
         assert_eq!(2, solve_problem_one(&input));
-        assert_eq!(0, solve_problem_two(&input));
+        assert_eq!(4, solve_problem_two(&input));
     }
 
     #[test]
     fn problem_input_works() {
         let input = get_input_from_file("problem_input.txt");
         assert_eq!(485, solve_problem_one(&input));
-        assert_eq!(0, solve_problem_two(&input));
+        assert_eq!(857, solve_problem_two(&input));
     }
 }
