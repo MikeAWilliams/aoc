@@ -7,37 +7,35 @@ fn main() {
     println!("Problem 2 {}", solve_problem_two(&input));
 }
 
-fn elf_pair_is_redundant(first:&work_indices, second:&work_indices)->bool{
+fn elf_pair_is_redundant(first:&WorkIndices, second:&WorkIndices)->bool{
     (first.start >= second.start && first.stop <= second.stop) ||
     (second.start >= first.start && second.stop <= first.stop)
 }
 
-fn elf_pair_overlaps(first:&work_indices, second:&work_indices)->bool{
+fn elf_pair_overlaps(first:&WorkIndices, second:&WorkIndices)->bool{
     elf_pair_is_redundant(first, second)||(
         (first.stop >= second.start && first.stop <= second.stop) ||
         (second.stop >= first.start && second.stop <= first.stop)
     )
 }
 
-struct work_indices{
+struct WorkIndices{
     pub start:i32,
     pub stop:i32,
 }
 
-fn score_elf_par(pair_as_vec:&Vec<Vec<i32>>, predicate: fn(&work_indices,&work_indices)->bool)->i32{
+fn score_elf_par(pair_as_vec:&Vec<Vec<i32>>, predicate: fn(&WorkIndices,&WorkIndices)->bool)->i32{
         let first = get_work_indices(&pair_as_vec[0]);
         let second = get_work_indices(&pair_as_vec[1]);
 
-    if predicate(&first,&second){
-        1
-    } else {
-        0
-    }
-
+        match predicate(&first, &second){
+            true => 1,
+            _ => 0,
+        }
 }
 
-fn get_work_indices(input:&Vec<i32>)-> work_indices{
-    work_indices { start: input[0], stop: input[1] }
+fn get_work_indices(input:&Vec<i32>)-> WorkIndices{
+    WorkIndices { start: input[0], stop: input[1] }
 }
 
 fn solve_problem_one(input: &Vec<Vec<Vec<i32>>>) -> i32 {
