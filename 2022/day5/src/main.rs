@@ -4,15 +4,56 @@ fn main() {
     let input = get_input_from_file("example_input.txt", 3);
     //let input = get_input_from_file("problem_input.txt", 9);
 
-    println!("Problem 1 {}", solve_problem_one(&input));
+    println!("Problem 2 {}", solve_problem_two(&input));
 }
 
 fn solve_problem_one(input: &ProblemData) -> String {
-    "ABC".to_string()
+    let mut data = input.clone();
+    // execute the instructions
+    for instruction in &input.instructions {
+        let parts = instruction.split(|c| c == ' ').collect::<Vec<&str>>();
+        let quantity = parts[1].parse::<i32>().unwrap();
+        let source = parts[3].parse::<i32>().unwrap() - 1;
+        let destination = parts[5].parse::<i32>().unwrap() - 1;
+        for operation_index in 0..quantity {
+            let item = data.stacks[source as usize].pop_front().unwrap();
+            data.stacks[destination as usize].push_front(item);
+        }
+    }
+
+    // construct the result
+    let mut result = String::new();
+    for stack in &data.stacks {
+        result.push(stack[0]);
+    }
+    result
 }
 
-fn solve_problem_two(input: &ProblemData) -> i32 {
-    0
+fn solve_problem_two(input: &ProblemData) -> String {
+    let mut data = input.clone();
+    // execute the instructions
+    for instruction in &input.instructions {
+        let parts = instruction.split(|c| c == ' ').collect::<Vec<&str>>();
+        let quantity = parts[1].parse::<i32>().unwrap();
+        let source = parts[3].parse::<i32>().unwrap() - 1;
+        let destination = parts[5].parse::<i32>().unwrap() - 1;
+        let mut tmp_stack: Vec<char> = Vec::new();
+        for operation_index in 0..quantity {
+            let item = data.stacks[source as usize].pop_front().unwrap();
+            tmp_stack.push(item);
+        }
+        tmp_stack.reverse();
+        for letter in &tmp_stack {
+            data.stacks[destination as usize].push_front(letter.clone());
+        }
+    }
+
+    // construct the result
+    let mut result = String::new();
+    for stack in &data.stacks {
+        result.push(stack[0]);
+    }
+    result
 }
 
 fn get_lines_from_file(file: &str) -> Vec<String> {
@@ -23,6 +64,7 @@ fn get_lines_from_file(file: &str) -> Vec<String> {
         .collect()
 }
 
+#[derive(Clone)]
 struct ProblemData {
     pub stacks: Vec<VecDeque<char>>,
     pub instructions: Vec<String>,
@@ -71,13 +113,13 @@ mod tests {
     fn example_input_works() {
         let input = get_input_from_file("example_input.txt", 3);
         assert_eq!("CMZ", solve_problem_one(&input));
-        assert_eq!(4, solve_problem_two(&input));
+        assert_eq!("MCD", solve_problem_two(&input));
     }
 
     #[test]
     fn problem_input_works() {
         let input = get_input_from_file("problem_input.txt", 9);
-        assert_eq!("CMZ", solve_problem_one(&input));
-        assert_eq!(857, solve_problem_two(&input));
+        assert_eq!("CNSZFDVLJ", solve_problem_one(&input));
+        assert_eq!("QNDWLMGNS", solve_problem_two(&input));
     }
 }
