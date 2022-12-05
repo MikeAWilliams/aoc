@@ -1,17 +1,17 @@
-use std::fs;
+use std::{collections::VecDeque, fs};
 
 fn main() {
-    let input = get_input_from_file("example_input.txt");
-    //let input = get_input_from_file("problem_input.txt");
+    let input = get_input_from_file("example_input.txt", 3);
+    //let input = get_input_from_file("problem_input.txt", 9);
 
     println!("Problem 1 {}", solve_problem_one(&input));
 }
 
-fn solve_problem_one(input: &Vec<Vec<WorkIndices>>) -> i32 {
-    0
+fn solve_problem_one(input: &ProblemData) -> String {
+    "ABC".to_string()
 }
 
-fn solve_problem_two(input: &Vec<Vec<WorkIndices>>) -> i32 {
+fn solve_problem_two(input: &ProblemData) -> i32 {
     0
 }
 
@@ -23,31 +23,44 @@ fn get_lines_from_file(file: &str) -> Vec<String> {
         .collect()
 }
 
-struct WorkIndices {
-    pub start: i32,
-    pub stop: i32,
+struct ProblemData {
+    pub stacks: Vec<VecDeque<char>>,
+    pub instructions: Vec<String>,
 }
 
-fn get_work_indices_from_str(input: &str) -> WorkIndices {
-    input
-        .split_once('-')
-        .map(|(start_str, end_str)| WorkIndices {
-            start: start_str.parse::<i32>().unwrap(),
-            stop: end_str.parse::<i32>().unwrap(),
-        })
-        .unwrap()
-}
-
-fn get_input_from_file(file: &str) -> Vec<Vec<WorkIndices>> {
+fn get_input_from_file(file: &str, stack_count: i32) -> ProblemData {
     let lines = get_lines_from_file(file);
-    lines
-        .iter()
-        .map(|line| {
-            line.split(|c| c == ',')
-                .map(|index_pair_str| get_work_indices_from_str(index_pair_str))
-                .collect()
-        })
-        .collect()
+    let mut result = ProblemData {
+        stacks: Vec::new(),
+        instructions: Vec::new(),
+    };
+    for i in 0..stack_count {
+        result.stacks.push(VecDeque::new());
+    }
+
+    // build the initial stacks
+    let mut input_index = 0;
+    for line in &lines {
+        if None == line.find("[") {
+            break;
+        }
+
+        for stack_index in 0..stack_count {
+            let char_index = (stack_index * 4) + 1;
+            let stack_char = line.as_bytes()[char_index as usize] as char;
+            if ' ' == stack_char {
+                continue;
+            }
+            //use push_back here so first thing pushed will end up on front
+            result.stacks[stack_index as usize].push_back(stack_char);
+        }
+
+        input_index += 1;
+    }
+    // copy out the instructions for later
+    result.instructions = lines[(input_index + 2)..].to_vec();
+
+    result
 }
 
 #[cfg(test)]
@@ -56,15 +69,15 @@ mod tests {
     use super::*;
     #[test]
     fn example_input_works() {
-        let input = get_input_from_file("example_input.txt");
-        assert_eq!(2, solve_problem_one(&input));
+        let input = get_input_from_file("example_input.txt", 3);
+        assert_eq!("CMZ", solve_problem_one(&input));
         assert_eq!(4, solve_problem_two(&input));
     }
 
     #[test]
     fn problem_input_works() {
-        let input = get_input_from_file("problem_input.txt");
-        assert_eq!(485, solve_problem_one(&input));
+        let input = get_input_from_file("problem_input.txt", 9);
+        assert_eq!("CMZ", solve_problem_one(&input));
         assert_eq!(857, solve_problem_two(&input));
     }
 }
