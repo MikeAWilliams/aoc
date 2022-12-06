@@ -13,18 +13,22 @@ fn all_unique(input: &str) -> bool {
     set.len() == input.len()
 }
 
-fn solve_problem_one(input: &str) -> i32 {
-    for start in 0..(input.len() - 5) {
-        let candidate = input.substring(start, start + 4);
+fn find_end_of_first_unique_substr_of_size(input: &str, size: usize) -> i32 {
+    for start in 0..(input.len() - (size + 1)) {
+        let candidate = input.substring(start, start + size);
         if all_unique(candidate) {
-            return (start + 4) as i32;
+            return (start + size) as i32;
         }
     }
     -1
 }
 
+fn solve_problem_one(input: &str) -> i32 {
+    find_end_of_first_unique_substr_of_size(input, 4)
+}
+
 fn solve_problem_two(input: &str) -> i32 {
-    0
+    find_end_of_first_unique_substr_of_size(input, 14)
 }
 
 fn get_lines_from_file(file: &str) -> Vec<String> {
@@ -51,13 +55,17 @@ mod tests {
         assert_eq!(10, solve_problem_one("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"));
         assert_eq!(11, solve_problem_one("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"));
 
-        assert_eq!(0, solve_problem_two("something"))
+        assert_eq!(19, solve_problem_two("mjqjpqmgbljsphdztnvjfqwrcgsmlb"));
+        assert_eq!(23, solve_problem_two("bvwbjplbgvbhsrlpgdmjqwftvncz"));
+        assert_eq!(23, solve_problem_two("nppdvjthqldpwncqszvftbrmjlhg"));
+        assert_eq!(29, solve_problem_two("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"));
+        assert_eq!(26, solve_problem_two("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"));
     }
 
     #[test]
     fn problem_input_works() {
         let input = get_input_from_file("problem_input.txt");
         assert_eq!(1361, solve_problem_one(&input));
-        assert_eq!(0, solve_problem_two(&input));
+        assert_eq!(3263, solve_problem_two(&input));
     }
 }
