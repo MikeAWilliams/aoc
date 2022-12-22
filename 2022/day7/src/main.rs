@@ -31,7 +31,7 @@ fn process_command_line_default(
 }
 
 fn process_command_line_cd(newDir: &str, current_index: i32, graph: &DirectoryGraph) -> i32 {
-    println!("its a cd {}", newDir);
+    //println!("its a cd {}", newDir);
     if newDir == ".." {
         graph.parents[current_index as usize] as i32
     } else {
