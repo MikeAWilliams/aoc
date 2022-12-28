@@ -1,17 +1,18 @@
 use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::fs;
 use substring::Substring;
 
 fn main() {
-    let input = get_input_from_file("example_input.txt");
-    //let input = get_input_from_file("problem_input.txt");
+    //let input = get_input_from_file("example_input.txt");
+    let input = get_input_from_file("problem_input.txt");
 
     println!("Problem 1 {}", solve_problem_one(&input));
 }
 
 fn add_sub_dir(dir: &str, current_index: i32, graph: &mut DirectoryGraph) {
-    let new_index = graph.add_node_if_new(dir.to_string());
-    graph.add_dependency_if_new(current_index as usize, new_index);
+    let newIndex = graph.add_node_if_new(dir.to_string());
+    graph.add_dependency_if_new(current_index as usize, newIndex);
 }
 
 fn process_command_line_default(
@@ -31,15 +32,15 @@ fn process_command_line_default(
     current_index
 }
 
-fn process_command_line_cd(new_dir: &str, current_index: i32, graph: &DirectoryGraph) -> i32 {
-    //println!("its a cd {}", new_dir);
-    if new_dir == ".." {
+fn process_command_line_cd(newDir: &str, current_index: i32, graph: &DirectoryGraph) -> i32 {
+    //println!("its a cd {}", newDir);
+    if newDir == ".." {
         graph.parents[current_index as usize] as i32
     } else {
         graph
             .nodes
             .iter()
-            .position(|node| node.name == new_dir)
+            .position(|node| node.name == newDir)
             .unwrap() as i32
     }
 }
@@ -74,12 +75,9 @@ fn generate_directory_graph(console: &Vec<String>) -> DirectoryGraph {
 }
 
 fn solve_problem_one(input: &Vec<String>) -> i32 {
-    println!("generating graph");
     let mut graph = generate_directory_graph(input);
-    graph.print();
-    println!("sizing it");
     graph.compute_folder_sizes();
-    println!("computing the result");
+    graph.print();
     graph
         .nodes
         .iter()
@@ -159,23 +157,25 @@ impl DirectoryGraph {
         }
     }
 
-    fn compute_folder_size_recursive(&mut self, index: usize, visited: &mut HashSet<usize>) -> i32 {
-        if visited.contains(&index) {
-            return self.nodes[index].total_size;
-        };
-        let mut child_sizes = 0;
-        let dependencies_copy = self.dependencies[index].clone();
-        for child_index in &dependencies_copy {
-            child_sizes += self.compute_folder_size_recursive(*child_index, visited);
-        }
-        self.nodes[index].total_size = self.nodes[index].files_size + child_sizes;
-        visited.insert(index);
-        self.nodes[index].total_size
-    }
-
     fn compute_folder_sizes(&mut self) {
+        for index in 0..self.nodes.len() {
+            self.compute_folder_size(index)
+        }
+    }
+    fn compute_folder_size(&mut self, root_index: usize) {
         let mut visited: HashSet<usize> = HashSet::new();
-        self.compute_folder_size_recursive(0, &mut visited);
+        let mut queue: VecDeque<usize> = VecDeque::new();
+        queue.push_back(root_index);
+        let mut child_size = 0;
+        while let Some(index) = queue.pop_front() {
+            child_size += self.nodes[index].files_size;
+            for dependency_index in &self.dependencies[index] {
+                if visited.insert(*dependency_index) {
+                    queue.push_front(*dependency_index)
+                }
+            }
+        }
+        self.nodes[root_index].total_size = child_size;
     }
 }
 
