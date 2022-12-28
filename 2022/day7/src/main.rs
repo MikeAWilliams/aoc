@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs;
 use substring::Substring;
 
@@ -9,8 +10,8 @@ fn main() {
 }
 
 fn add_sub_dir(dir: &str, current_index: i32, graph: &mut DirectoryGraph) {
-    let newIndex = graph.add_node_if_new(dir.to_string());
-    graph.add_dependency_if_new(current_index as usize, newIndex);
+    let new_index = graph.add_node_if_new(dir.to_string());
+    graph.add_dependency_if_new(current_index as usize, new_index);
 }
 
 fn process_command_line_default(
@@ -25,20 +26,20 @@ fn process_command_line_default(
         add_sub_dir(destination, current_index, graph);
     } else {
         let file_size = line.split_whitespace().next().unwrap();
-        graph.nodes[current_index as usize].filesSize += file_size.parse::<i32>().unwrap();
+        graph.nodes[current_index as usize].files_size += file_size.parse::<i32>().unwrap();
     }
     current_index
 }
 
-fn process_command_line_cd(newDir: &str, current_index: i32, graph: &DirectoryGraph) -> i32 {
-    //println!("its a cd {}", newDir);
-    if newDir == ".." {
+fn process_command_line_cd(new_dir: &str, current_index: i32, graph: &DirectoryGraph) -> i32 {
+    //println!("its a cd {}", new_dir);
+    if new_dir == ".." {
         graph.parents[current_index as usize] as i32
     } else {
         graph
             .nodes
             .iter()
-            .position(|node| node.name == newDir)
+            .position(|node| node.name == new_dir)
             .unwrap() as i32
     }
 }
@@ -73,9 +74,18 @@ fn generate_directory_graph(console: &Vec<String>) -> DirectoryGraph {
 }
 
 fn solve_problem_one(input: &Vec<String>) -> i32 {
+    println!("generating graph");
     let mut graph = generate_directory_graph(input);
     graph.print();
-    0
+    println!("sizing it");
+    graph.compute_folder_sizes();
+    println!("computing the result");
+    graph
+        .nodes
+        .iter()
+        .filter(|node| node.total_size <= 100000)
+        .map(|node| node.total_size)
+        .sum()
 }
 
 fn solve_problem_two(input: &Vec<String>) -> i32 {
@@ -83,8 +93,8 @@ fn solve_problem_two(input: &Vec<String>) -> i32 {
 }
 
 struct DirectoryNode {
-    pub filesSize: i32,
-    pub totalSize: i32,
+    pub files_size: i32,
+    pub total_size: i32,
     pub name: String,
 }
 
@@ -101,8 +111,8 @@ impl DirectoryGraph {
             Some(index) => index,
             None => {
                 self.nodes.push(DirectoryNode {
-                    filesSize: 0,
-                    totalSize: 0,
+                    files_size: 0,
+                    total_size: 0,
                     name: name,
                 });
                 self.dependencies.push(vec![]);
@@ -125,7 +135,7 @@ impl DirectoryGraph {
     fn print(&self) {
         println!("Nodes");
         for node in &self.nodes {
-            println!("{}, {}, {}", node.name, node.filesSize, node.totalSize)
+            println!("{}, {}, {}", node.name, node.files_size, node.total_size)
         }
 
         println!("Parents");
@@ -148,6 +158,25 @@ impl DirectoryGraph {
             );
         }
     }
+
+    fn compute_folder_size_recursive(&mut self, index: usize, visited: &mut HashSet<usize>) -> i32 {
+        if visited.contains(&index) {
+            return self.nodes[index].total_size;
+        };
+        let mut child_sizes = 0;
+        let dependencies_copy = self.dependencies[index].clone();
+        for child_index in &dependencies_copy {
+            child_sizes += self.compute_folder_size_recursive(*child_index, visited);
+        }
+        self.nodes[index].total_size = self.nodes[index].files_size + child_sizes;
+        visited.insert(index);
+        self.nodes[index].total_size
+    }
+
+    fn compute_folder_sizes(&mut self) {
+        let mut visited: HashSet<usize> = HashSet::new();
+        self.compute_folder_size_recursive(0, &mut visited);
+    }
 }
 
 fn get_lines_from_file(file: &str) -> Vec<String> {
@@ -169,7 +198,7 @@ mod tests {
     #[test]
     fn example_input_works() {
         let input = get_input_from_file("example_input.txt");
-        assert_eq!(48381165, solve_problem_one(&input));
+        assert_eq!(95437, solve_problem_one(&input));
         assert_eq!(0, solve_problem_two(&input));
     }
 
