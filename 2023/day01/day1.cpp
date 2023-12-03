@@ -7,12 +7,15 @@
 #include <cctype>
 #include <iostream>
 #include <fstream>
+#include <unordered_map>
 
 std::tuple<int,int> GetDigits(const std::string& line);
 int GetIntValueOfDigit(const char digitChar);
 int ConvertDigitsToLineValue(std::tuple<int,int> digits);
 int Solve(const std::vector<std::string>& lines);
+int SolveWithWords(const std::vector<std::string>& lines);
 std::vector<std::string> GetPuzzleInput();
+std::string SubsituteDigitsForWords(const std::string& input);
 
 TEST_CASE( "GetDigits", "[day1]" )
 {
@@ -57,6 +60,24 @@ TEST_CASE( "Solve Part 1", "[day1]" )
     REQUIRE(55123 == Solve(GetPuzzleInput()));
 }
 
+TEST_CASE("Solve Part 2 simple", "[day1]")
+{
+    std::vector<std::string> data {
+        "two1nine",
+        "eightwothree",
+        "abcone2threexyz",
+        "xtwone3four",
+        "4nineeightseven2",
+        "zoneight234",
+        "7pqrstsixteen"
+    };
+    REQUIRE(281 == SolveWithWords(data));
+}
+
+TEST_CASE( "Solve Part 2", "[day1]" )
+{
+    REQUIRE(55260 == SolveWithWords(GetPuzzleInput()));
+}
 
 std::tuple<int,int> GetDigits(const std::string& line)
 {
@@ -64,6 +85,7 @@ std::tuple<int,int> GetDigits(const std::string& line)
         return std::isdigit(static_cast<int>(c));
     });
     if(std::cend(line) == first){
+        std::cout << "\n\n loook here \n\n" << line << "\n\n\n";
         throw "can't find first character give up";
     }
 
@@ -114,4 +136,66 @@ std::vector<std::string> GetPuzzleInput()
     }
     file.close();
     return result;
+}
+
+// Contract: Mutate input by replacing the leftmost digit word with its digit
+//           Return true if a change was made
+//           I hate this but it worked it is so wastefull
+bool ReplaceLeftMostDigitWord(std::string& input)
+{
+    std::vector<std::pair<std::string, std::string>> replaceKey
+    {
+        {"one", "1"},
+        {"two", "2"},
+        {"three", "3"},
+        {"four", "4"},
+        {"five", "5"},
+        {"six", "6"},
+        {"seven", "7"},
+        {"eight", "8"},
+        {"nine", "9"}
+    };
+
+    int minIndex = static_cast<int>(input.length());
+    std::pair<std::string, std::string> minPair;
+    for(const auto& pair : replaceKey)
+    {
+        int index = input.find(pair.first);
+        if(index != std::string::npos)
+        {
+            if(index < minIndex)
+            {
+                minIndex = index;
+                minPair = pair;
+            }
+        }
+    }
+    if(minIndex < static_cast<int>(input.length()))
+    {
+        //input.replace(minIndex, minPair.first.size(), minPair.second);
+        input.replace(minIndex, 1, minPair.second);
+        return true;
+    }
+    return false;
+}
+
+std::string SubsituteDigitsForWords(const std::string& input)
+{
+    std::string result{input};
+    auto didReplace = ReplaceLeftMostDigitWord(result);
+    while(didReplace)
+    {
+        didReplace = ReplaceLeftMostDigitWord(result);
+    }
+    return result;
+}
+
+int SolveWithWords(const std::vector<std::string>& lines)
+{
+    std::vector<std::string> withDigitsForWords;
+    withDigitsForWords.reserve(lines.size());
+    std::transform(std::cbegin(lines), std::cend(lines), std::back_insert_iterator(withDigitsForWords), [](auto line){
+        return SubsituteDigitsForWords(line);
+    });
+    return Solve(withDigitsForWords);
 }
