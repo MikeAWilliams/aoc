@@ -8,6 +8,8 @@
 #include <string>
 #include <string_view>
 
+// my clang format is messed up right now so sorry for the terrible formatting
+
 struct CubeData {
   int red = 0;
   int green = 0;
