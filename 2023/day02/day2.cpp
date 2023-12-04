@@ -22,7 +22,7 @@ struct GameData {
 
 GameData ParseAGame(const std::string &line);
 bool GameIsPossible(const GameData &game, const CubeData &maxOfEachCube);
-int Solve(const std::vector<std::string> &lines);
+int Solve(const std::vector<std::string> &lines, const CubeData &maxOfEachCube);
 std::vector<std::string> GetPuzzleInput();
 
 TEST_CASE("ParseAGame", "[day2]") {
@@ -66,6 +66,29 @@ TEST_CASE("GameIsPossible", "[day2]") {
   REQUIRE(GameIsPossible(
       ParseAGame("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"),
       maxOfEachCube));
+}
+
+TEST_CASE("Solve part 1 simple", "[Day2]") {
+  CubeData maxOfEachCube{12, 13, 14};
+  REQUIRE(8 == Solve(
+                   std::vector<std::string>{
+                       "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green",
+                       "Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 "
+                       "green, 1 blue",
+                       "Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 "
+                       "green; 5 green, "
+                       "1 red",
+                       "Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 "
+                       "green, 15 blue, "
+                       "14 red",
+                       "Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green",
+                   },
+                   maxOfEachCube));
+}
+
+TEST_CASE("Solve part 1 from file", "[Day2]") {
+  CubeData maxOfEachCube{12, 13, 14};
+  REQUIRE(2913 == Solve(GetPuzzleInput(), maxOfEachCube));
 }
 
 GameData ParseAGame(const std::string &line) {
@@ -116,7 +139,17 @@ bool GameIsPossible(const GameData &game, const CubeData &maxOfEachCube) {
   return true;
 }
 
-int Solve(const std::vector<std::string> &lines) { return 0; }
+int Solve(const std::vector<std::string> &lines,
+          const CubeData &maxOfEachCube) {
+  int result = 0;
+  for (const auto &line : lines) {
+    auto game{ParseAGame(line)};
+    if (GameIsPossible(game, maxOfEachCube)) {
+      result += game.id;
+    }
+  }
+  return result;
+}
 
 std::vector<std::string> GetPuzzleInput() {
   // build is down one folder
