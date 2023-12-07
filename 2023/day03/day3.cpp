@@ -8,7 +8,7 @@
 #include <ranges>
 #include <string>
 
-std::tuple<bool, int, int> IdentifyNumber(char* in);
+std::tuple<bool, int, int> IdentifyNumber(const char* in);
 bool                       SymbolAdjacent(
                           const std::vector<std::string>& search, int row, int column, int width);
 int                      Solve(const std::vector<std::string>& lines);
@@ -26,56 +26,70 @@ TEST_CASE("symbolAdjacent", "[day3]") {
     // symbol at -1 col
     REQUIRE(SymbolAdjacent(std::vector<std::string>{"@4"}, 0, 1, 1));
     // symbol at -1 row
-    REQUIRE(SymbolAdjacent(std::vector<std::string>{
-      // clang-format off
+    REQUIRE(SymbolAdjacent(
+        std::vector<std::string>{
+            // clang-format off
       ".@.",
       ".4.",
-    // clang-format on
-    }, 1, 1, 1));
+            // clang-format on
+        },
+        1, 1, 1));
     // symbol at +1 row
-    REQUIRE(SymbolAdjacent(std::vector<std::string>{
-      // clang-format off
+    REQUIRE(SymbolAdjacent(
+        std::vector<std::string>{
+            // clang-format off
       ".4.",
       ".@.",
-    // clang-format on
-    }, 0, 1, 1));
+            // clang-format on
+        },
+        0, 1, 1));
     // symbol at +1 col +1 row
-    REQUIRE(SymbolAdjacent(std::vector<std::string>{
-      // clang-format off
+    REQUIRE(SymbolAdjacent(
+        std::vector<std::string>{
+            // clang-format off
       ".4.",
       "..@",
-    // clang-format on
-    }, 0, 1, 1));
+            // clang-format on
+        },
+        0, 1, 1));
     // symbol at -1 col +1 row
-    REQUIRE(SymbolAdjacent(std::vector<std::string>{
-      // clang-format off
+    REQUIRE(SymbolAdjacent(
+        std::vector<std::string>{
+            // clang-format off
       ".4.",
       "@..",
-    // clang-format on
-    }, 0, 1, 1));
+            // clang-format on
+        },
+        0, 1, 1));
     // symbol at -1 row -1 col
-    REQUIRE(SymbolAdjacent(std::vector<std::string>{
-      // clang-format off
+    REQUIRE(SymbolAdjacent(
+        std::vector<std::string>{
+            // clang-format off
       "@..",
       ".4.",
-    // clang-format on
-    }, 1, 1, 1));
+            // clang-format on
+        },
+        1, 1, 1));
     // symbol at -1 row +1 col
-    REQUIRE(SymbolAdjacent(std::vector<std::string>{
-      // clang-format off
+    REQUIRE(SymbolAdjacent(
+        std::vector<std::string>{
+            // clang-format off
       "..@",
       ".4.",
-    // clang-format on
-    }, 1, 1, 1));
-    
+            // clang-format on
+        },
+        1, 1, 1));
+
     // some random larger than 1 tests
     // symbol at +1 col +1 row
-    REQUIRE(SymbolAdjacent(std::vector<std::string>{
-      // clang-format off
+    REQUIRE(SymbolAdjacent(
+        std::vector<std::string>{
+            // clang-format off
       ".444.",
       "..@..",
-    // clang-format on
-    }, 0, 1, 1));
+            // clang-format on
+        },
+        0, 1, 1));
 }
 TEST_CASE("IdentifyNumber", "[day3]") {
     auto [isInt, intResult, intLength] =
@@ -103,8 +117,17 @@ TEST_CASE("IdentifyNumber", "[day3]") {
     REQUIRE_FALSE(isInt);
 }
 
+TEST_CASE("part 1 mike", "[day3]") {
+    REQUIRE(
+        467 + 114 == Solve(std::vector<std::string>{
+                         // clang-format off
+            "467.114*..",
+            "...*......",
+    }));
+    // clang-format on
+}
+
 TEST_CASE("part 1 simple", "[day3]") {
-    SKIP();
     REQUIRE(
         4361 == Solve(std::vector<std::string>{
                     // clang-format off
@@ -122,6 +145,10 @@ TEST_CASE("part 1 simple", "[day3]") {
     // clang-format on
 }
 
+TEST_CASE("part 1 from file", "[day3]") {
+    REQUIRE(514969 == Solve(GetPuzzleInput()));
+}
+
 bool SymbolAdjacent(
     const std::vector<std::string>& search, int row, int column, int width) {
     if (row >= search.size() || column >= search[row].length()) {
@@ -130,15 +157,8 @@ bool SymbolAdjacent(
     // pairs of {column offset, row offset}
     // all thse count as adjacent
     const std::vector<std::pair<int, int>> adjacency{
-      {1, 0},
-      {-1,0},
-      {0,1},
-      {0,-1},
-      {1,1},
-      {-1,1},
-      {-1,-1},
-      {1,-1},
-      };
+        {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1},
+    };
 
     for (int i = column; i < column + width; ++i) {
         for (const auto& offset : adjacency) {
@@ -161,7 +181,7 @@ bool SymbolAdjacent(
     return false;
 }
 
-std::tuple<bool, int, int> IdentifyNumber(char* in) {
+std::tuple<bool, int, int> IdentifyNumber(const char* in) {
     if (nullptr == in) {
         throw "Why would you do that";
     }
@@ -175,6 +195,27 @@ std::tuple<bool, int, int> IdentifyNumber(char* in) {
 
 int Solve(const std::vector<std::string>& lines) {
     int result = 0;
+
+    for (int rowIndex = 0; rowIndex < static_cast<int>(lines.size());
+         ++rowIndex) {
+        for (int columnIndex = 0; columnIndex < lines[rowIndex].size();
+             ++columnIndex) {
+            if ('-' == lines[rowIndex][columnIndex]) {
+                // the author of this puzzle meant to exclude negative numbers
+                // but atoi will find -357 as a negative number
+                continue;
+            }
+            auto [isNumber, value, length] =
+                IdentifyNumber(lines[rowIndex].data() + columnIndex);
+            if (isNumber) {
+                // std::cout << value << " " << length << std::endl;
+                if (SymbolAdjacent(lines, rowIndex, columnIndex, length)) {
+                    result += value;
+                }
+                columnIndex += length;
+            }
+        }
+    }
     return result;
 }
 
