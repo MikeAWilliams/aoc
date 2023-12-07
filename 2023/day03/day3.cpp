@@ -257,24 +257,19 @@ int SolvePart2(const std::vector<std::string>& lines) {
             if ('*' != lines[rowIndex][columnIndex]) {
                 continue;
             }
-            auto adjacentParts = partNumbers | std::views::filter([rowIndex, columnIndex](const auto& part){
+            auto adjacentPartsView = partNumbers | std::views::filter([rowIndex, columnIndex](const auto& part){
                 return !(ADJACENT_OFFSETS | std::views::filter([rowIndex, columnIndex, &part](const auto& offset){
                     return part.Intersects(rowIndex + offset.first, columnIndex + offset.second);
                 })).empty();
             });
-            // i'm pretty sure i'm using rangees wrong here becasue I want adjacentParts.size() but its not there. Also no support for const filter result or cbegin cend
-            if(2 == std::distance(std::begin(adjacentParts), std::end(adjacentParts)))
+            // ranges::to<std::vector>() isn't implemented yet
+            // this coppies the parts but makes it easier to count them
+            std::vector<PartNumber> adjacentParts(std::begin(adjacentPartsView), std::end(adjacentPartsView));
+            if(2 == adjacentParts.size())
             {
-                // fold_left is in c++23 but not until gcc13 and i'm on 12 
-                // not sure if this is correct syntax because I can't compile it.
-                //int gearRatio = std::ranges::fold_left(adjacentParts, 1, [](int valueSoFar, const auto& partNumber){
-                   //return valueSoFar * partNumber.value; 
-                //});
-                // lets use a silly for loop. who needs ranges anyway
-                int gearRatio = 1;
-                for(const auto& partNumber : adjacentParts){
-                    gearRatio *= partNumber.value;
-                }
+                int gearRatio = std::accumulate(std::begin(adjacentParts), std::end(adjacentParts), 1, [](int valueSoFar, const auto& partNumber){
+                    return valueSoFar * partNumber.value;
+                });
                 result += gearRatio;
             }
         }
