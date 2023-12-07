@@ -14,6 +14,7 @@ struct CardData {
     int              number;
     std::vector<int> winningNumbers;
     std::vector<int> numbers;
+    int              numberOfCopies = 1;
 
     CardData(const std::string&);
     int CountWinningNumbers();
@@ -55,6 +56,21 @@ TEST_CASE("solve part 1 from file", "[day4]") {
     REQUIRE(25183 == Solve(GetPuzzleInput()));
 }
 
+TEST_CASE("solve part 2 easy", "[day4]") {
+    REQUIRE(
+        30 == SolvePart2(std::vector<std::string>{
+                       "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53",
+                       "Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19",
+                       "Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1",
+                       "Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83",
+                       "Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36",
+                       "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11"}));
+}
+
+TEST_CASE("solve part 2 from file", "[day4]") {
+    REQUIRE(5667240 == SolvePart2(GetPuzzleInput()));
+}
+
 int Solve(const std::vector<std::string>& lines) {
     // with no ranges::to or fold functions I a temp vector
     std::vector<int> scores;
@@ -66,8 +82,27 @@ int Solve(const std::vector<std::string>& lines) {
 }
 
 int SolvePart2(const std::vector<std::string>& lines) {
-    auto result = 0;
-    return result;
+    std::vector<CardData> cards;
+    cards.reserve(lines.size());
+    std::ranges::transform(
+        lines, std::back_insert_iterator(cards),
+        [](const auto& line) { return CardData(line); });
+
+    for (size_t i = 0; i < cards.size(); ++i) {
+        auto winsOnCard = cards[i].CountWinningNumbers();
+        for (size_t j = i + 1; j <= i + winsOnCard; ++j) {
+            if (j >= cards.size()) {
+                throw "index out of bouds";
+            }
+            cards[j].numberOfCopies += cards[i].numberOfCopies;
+        }
+    }
+
+    return std::accumulate(
+        std::cbegin(cards), std::cend(cards), 0,
+        [](int valueSoFar, const auto& aCard) {
+            return valueSoFar + aCard.numberOfCopies;
+        });
 }
 
 CardData::CardData(const std::string& line) {
@@ -107,8 +142,7 @@ CardData::CardData(const std::string& line) {
     this->numbers = std::vector(std::begin(numbersView), std::end(numbersView));
 }
 
-int CardData::CountWinningNumbers()
-{
+int CardData::CountWinningNumbers() {
     return std::ranges::count_if(this->numbers, [this](auto num) {
         return std::ranges::find(this->winningNumbers, num) !=
                this->winningNumbers.end();
