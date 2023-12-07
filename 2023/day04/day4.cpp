@@ -16,7 +16,8 @@ struct CardData {
     std::vector<int> numbers;
 
     CardData(const std::string&);
-    int Score();
+    int CountWinningNumbers();
+    int ScorePart1();
 };
 
 int                      Solve(const std::vector<std::string>& lines);
@@ -28,7 +29,7 @@ TEST_CASE("GameData", "[day4]") {
     REQUIRE(1 == testObject.number);
     REQUIRE(5 == testObject.winningNumbers.size());
     REQUIRE(8 == testObject.numbers.size());
-    REQUIRE(8 == testObject.Score());
+    REQUIRE(8 == testObject.ScorePart1());
 
     testObject =
         CardData("Card 213:  8 24 48  5 27 13 71 26 17 21 | 63 11 89 35 69 98 "
@@ -36,7 +37,7 @@ TEST_CASE("GameData", "[day4]") {
     REQUIRE(213 == testObject.number);
     REQUIRE(10 == testObject.winningNumbers.size());
     REQUIRE(25 == testObject.numbers.size());
-    REQUIRE(0 == testObject.Score());
+    REQUIRE(0 == testObject.ScorePart1());
 }
 
 TEST_CASE("solve part 1 easy", "[day4]") {
@@ -60,7 +61,7 @@ int Solve(const std::vector<std::string>& lines) {
     scores.reserve(lines.size());
     std::ranges::transform(
         lines, std::back_insert_iterator(scores),
-        [](const auto& line) { return CardData(line).Score(); });
+        [](const auto& line) { return CardData(line).ScorePart1(); });
     return std::accumulate(std::cbegin(scores), std::cend(scores), 0);
 }
 
@@ -106,12 +107,16 @@ CardData::CardData(const std::string& line) {
     this->numbers = std::vector(std::begin(numbersView), std::end(numbersView));
 }
 
-int CardData::Score() {
-    int count = std::ranges::count_if(this->numbers, [this](auto num) {
+int CardData::CountWinningNumbers()
+{
+    return std::ranges::count_if(this->numbers, [this](auto num) {
         return std::ranges::find(this->winningNumbers, num) !=
                this->winningNumbers.end();
     });
-    return static_cast<int>(std::pow(2.0, count - 1));
+}
+
+int CardData::ScorePart1() {
+    return static_cast<int>(std::pow(2.0, this->CountWinningNumbers() - 1));
 }
 
 std::vector<std::string> GetPuzzleInput() {
