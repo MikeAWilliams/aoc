@@ -13,21 +13,20 @@
 #include <unordered_map>
 
 struct MapRange {
-    int destinationStart;
-    int sourceStart;
-    int length;
-    MapRange(const std::vector<int>& ints);
-    bool SourceInRange(int source);
-    int  GetValue(int source);
+    int64_t destinationStart;
+    int64_t sourceStart;
+    int64_t length;
+    MapRange(const std::vector<int64_t>& ints);
+    bool SourceInRange(int64_t source) const;
+    int64_t  GetValue(int64_t source) const;
 };
 
 class ElfMap {
-    std::unordered_map<int, int> map;
+    std::vector<MapRange> ranges;
 
 public:
     ElfMap() = default;
-    int  Get(int source) const;
-    void Add(int source, int destination);
+    int64_t  Get(int64_t source) const;
     void Add(const MapRange& range);
 };
 
@@ -37,25 +36,21 @@ class MapChain {
 public:
     MapChain() = default;
     void Add(ElfMap toAdd);
-    int  Get(int firstSource) const;
+    int64_t  Get(int64_t firstSource) const;
 };
 
 struct PuzzleData {
-    std::vector<int> seedNumbers;
+    std::vector<int64_t> seedNumbers;
     MapChain         mapChain;
 };
 
-int                      Solve(const std::vector<std::string>& lines);
-int                      SolvePart2(const std::vector<std::string>& lines);
+int64_t                      Solve(const std::vector<std::string>& lines);
+int64_t                      SolvePart2(const std::vector<std::string>& lines);
 PuzzleData               GetPuzzleData(const std::vector<std::string>& lines);
 std::vector<std::string> GetPuzzleInput();
 
 TEST_CASE("ElfMap", "[day5]") {
     ElfMap testObject;
-    testObject.Add(1, 2);
-    REQUIRE(2 == testObject.Get(1));
-    REQUIRE(7 == testObject.Get(7));
-
     testObject.Add(MapRange({50, 98, 2}));
     REQUIRE(97 == testObject.Get(97));
     REQUIRE(50 == testObject.Get(98));
@@ -68,8 +63,8 @@ TEST_CASE("MapChain", "[day5]") {
     ElfMap   map1;
     ElfMap   map2;
 
-    map1.Add(50, 100);
-    map2.Add(100, 150);
+    map1.Add(MapRange{{100, 50, 1}});
+    map2.Add(MapRange{{150, 100, 1}});
 
     testObject.Add(map1);
     testObject.Add(map2);
@@ -127,42 +122,32 @@ TEST_CASE("Part 1 easy", "[day5]") {
 }
 
 TEST_CASE("Part 1 from file", "[day5]") {
-    SKIP();
     REQUIRE(35 == Solve(GetPuzzleInput()));
 }
 
-void ElfMap::Add(int source, int destination) {
-    map.insert({source, destination});
-}
+void ElfMap::Add(const MapRange& range) { this->ranges.push_back(range); }
 
-void ElfMap::Add(const MapRange& range) {
-    int source      = range.sourceStart;
-    int destination = range.destinationStart;
-    for (int i = 0; i < range.length; ++i) {
-        this->Add(source, destination);
-        source++;
-        destination++;
-    }
-}
-
-int ElfMap::Get(int source) const {
-    if (map.contains(source)) {
-        return map.at(source);
+int64_t ElfMap::Get(int64_t source) const {
+    for (const auto& mapRange :
+         this->ranges | std::ranges::views::filter([source](const auto& mapRange) {
+             return mapRange.SourceInRange(source);
+         })) {
+        return mapRange.GetValue(source);
     }
     return source;
 }
 
 void MapChain::Add(ElfMap inMap) { maps.push_back(inMap); }
 
-int MapChain::Get(int firstSource) const {
-    int result = firstSource;
+int64_t MapChain::Get(int64_t firstSource) const {
+    int64_t result = firstSource;
     for (const auto& map : maps) {
         result = map.Get(result);
     }
     return result;
 }
 
-MapRange::MapRange(const std::vector<int>& ints) {
+MapRange::MapRange(const std::vector<int64_t>& ints) {
     if (3 != ints.size()) {
         throw "bad range data in";
     }
@@ -171,12 +156,17 @@ MapRange::MapRange(const std::vector<int>& ints) {
     length           = ints[2];
 }
 
-bool MapRange::SourceInRange(int source) {
+bool MapRange::SourceInRange(int64_t source) const {
     return source >= this->sourceStart &&
            source < this->sourceStart + this->length;
 }
-int MapRange::GetValue(int source) {
-    return (source - this->sourceStart) + this->destinationStart;
+int64_t MapRange::GetValue(int64_t source) const {
+    int64_t result = (source - this->sourceStart) + this->destinationStart;
+    if(result < 0){
+        std::cout << destinationStart << " " << sourceStart << " " << length << " " << source << " " << result;
+        throw "error got a negative";
+    }
+    return result;
 }
 
 PuzzleData GetPuzzleData(const std::vector<std::string>& lines) {
@@ -187,13 +177,13 @@ PuzzleData GetPuzzleData(const std::vector<std::string>& lines) {
                          return std::string_view(subRange).size() > 0;
                      }) |
                      std::ranges::views::transform([](const auto subRange) {
-                         return std::atoi(std::string_view(subRange).data());
+                         return std::atoll(std::string_view(subRange).data());
                      });
     result.seedNumbers =
-        std::vector(std::begin(seedsView), std::end(seedsView));
+        std::vector<int64_t>(std::begin(seedsView), std::end(seedsView));
 
     ElfMap currentMap;
-    for (int lineIndex = 3; lineIndex < lines.size(); ++lineIndex) {
+    for (int64_t lineIndex = 3; lineIndex < lines.size(); ++lineIndex) {
         if (0 == lines[lineIndex].length()) {
             lineIndex += 2;
             result.mapChain.Add(currentMap);
@@ -205,25 +195,25 @@ PuzzleData GetPuzzleData(const std::vector<std::string>& lines) {
                 return std::string_view(subRange).size() > 0;
             }) |
             std::ranges::views::transform([](const auto subRange) {
-                return std::atoi(std::string_view(subRange).data());
+                return std::atoll(std::string_view(subRange).data());
             });
-        std::vector<int> rangeVector(
+        std::vector<int64_t> rangeVector(
             std::begin(rangeView), std::end(rangeView));
         currentMap.Add(rangeVector);
     }
 
     return result;
 }
-int Solve(const std::vector<std::string>& lines) {
+int64_t Solve(const std::vector<std::string>& lines) {
     PuzzleData data   = GetPuzzleData(lines);
-    int        result = std::numeric_limits<int>::max();
+    int64_t        result = std::numeric_limits<int64_t>::max();
     for (auto seedNumber : data.seedNumbers) {
         result = std::min(result, data.mapChain.Get(seedNumber));
     }
     return result;
 }
 
-int SolvePart2(const std::vector<std::string>& lines) { return 0; }
+int64_t SolvePart2(const std::vector<std::string>& lines) { return 0; }
 
 std::vector<std::string> GetPuzzleInput() {
     // build is down one folder
