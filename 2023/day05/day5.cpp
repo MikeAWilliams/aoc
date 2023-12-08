@@ -17,35 +17,35 @@ struct MapRange {
     int64_t sourceStart;
     int64_t length;
     MapRange(const std::vector<int64_t>& ints);
-    bool SourceInRange(int64_t source) const;
-    int64_t  GetValue(int64_t source) const;
+    bool    SourceInRange(int64_t source) const;
+    int64_t GetValue(int64_t source) const;
 };
 
-class ElfMap {
+struct ElfMap {
     std::vector<MapRange> ranges;
 
 public:
     ElfMap() = default;
-    int64_t  Get(int64_t source) const;
-    void Add(const MapRange& range);
+    int64_t Get(int64_t source) const;
+    void    Add(const MapRange& range);
 };
 
-class MapChain {
+struct MapChain {
     std::vector<ElfMap> maps;
 
 public:
     MapChain() = default;
-    void Add(ElfMap toAdd);
-    int64_t  Get(int64_t firstSource) const;
+    void    Add(ElfMap toAdd);
+    int64_t Get(int64_t firstSource) const;
 };
 
 struct PuzzleData {
     std::vector<int64_t> seedNumbers;
-    MapChain         mapChain;
+    MapChain             mapChain;
 };
 
-int64_t                      Solve(const std::vector<std::string>& lines);
-int64_t                      SolvePart2(const std::vector<std::string>& lines);
+int64_t                  Solve(const std::vector<std::string>& lines);
+int64_t                  SolvePart2(const std::vector<std::string>& lines);
 PuzzleData               GetPuzzleData(const std::vector<std::string>& lines);
 std::vector<std::string> GetPuzzleInput();
 
@@ -122,16 +122,17 @@ TEST_CASE("Part 1 easy", "[day5]") {
 }
 
 TEST_CASE("Part 1 from file", "[day5]") {
-    REQUIRE(35 == Solve(GetPuzzleInput()));
+    REQUIRE(178159714 == Solve(GetPuzzleInput()));
 }
 
 void ElfMap::Add(const MapRange& range) { this->ranges.push_back(range); }
 
 int64_t ElfMap::Get(int64_t source) const {
     for (const auto& mapRange :
-         this->ranges | std::ranges::views::filter([source](const auto& mapRange) {
-             return mapRange.SourceInRange(source);
-         })) {
+         this->ranges |
+             std::ranges::views::filter([source](const auto& mapRange) {
+                 return mapRange.SourceInRange(source);
+             })) {
         return mapRange.GetValue(source);
     }
     return source;
@@ -162,8 +163,9 @@ bool MapRange::SourceInRange(int64_t source) const {
 }
 int64_t MapRange::GetValue(int64_t source) const {
     int64_t result = (source - this->sourceStart) + this->destinationStart;
-    if(result < 0){
-        std::cout << destinationStart << " " << sourceStart << " " << length << " " << source << " " << result;
+    if (result < 0) {
+        std::cout << destinationStart << " " << sourceStart << " " << length
+                  << " " << source << " " << result;
         throw "error got a negative";
     }
     return result;
@@ -171,7 +173,7 @@ int64_t MapRange::GetValue(int64_t source) const {
 
 PuzzleData GetPuzzleData(const std::vector<std::string>& lines) {
     PuzzleData       result;
-    std::string_view seedsString(lines[0].data() + 7, lines[0].back());
+    std::string_view seedsString(lines[0].data() + 7, lines[0].size() - 7);
     auto             seedsView = std::views::split(seedsString, ' ') |
                      std::ranges::views::filter([](const auto subRange) {
                          return std::string_view(subRange).size() > 0;
@@ -202,11 +204,37 @@ PuzzleData GetPuzzleData(const std::vector<std::string>& lines) {
         currentMap.Add(rangeVector);
     }
 
+    result.mapChain.Add(currentMap);
     return result;
 }
+
+void DumpPuzzleDataToFileForDebug(
+    const PuzzleData& data, const std::string& fileName) {
+    std::ofstream file(fileName);
+    if (!file.is_open()) {
+        throw "I can't open the output file";
+    }
+    file << "seeds:";
+    for (auto seed : data.seedNumbers) {
+        file << " " << seed;
+    }
+    file << "\n\n";
+
+    for (const auto& map : data.mapChain.maps) {
+        file << "thing-to-thing map:\n";
+        for (const auto& mapRange : map.ranges) {
+            file << mapRange.destinationStart << " " << mapRange.sourceStart
+                 << " " << mapRange.length << "\n";
+        }
+        file << "\n";
+    }
+    file.close();
+}
+
 int64_t Solve(const std::vector<std::string>& lines) {
-    PuzzleData data   = GetPuzzleData(lines);
-    int64_t        result = std::numeric_limits<int64_t>::max();
+    PuzzleData data = GetPuzzleData(lines);
+    //DumpPuzzleDataToFileForDebug(data, "../puzzle_out.txt");
+    int64_t result = std::numeric_limits<int64_t>::max();
     for (auto seedNumber : data.seedNumbers) {
         result = std::min(result, data.mapChain.Get(seedNumber));
     }
