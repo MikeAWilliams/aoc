@@ -41,6 +41,7 @@ public:
 
 struct PuzzleData {
     std::vector<int64_t> seedNumbers;
+    std::vector<std::pair<int64_t, int64_t>> seedNumberRanges;
     MapChain             mapChain;
 };
 
@@ -125,6 +126,49 @@ TEST_CASE("Part 1 from file", "[day5]") {
     REQUIRE(178159714 == Solve(GetPuzzleInput()));
 }
 
+TEST_CASE("Part 2 easy", "[day5]") {
+    REQUIRE(
+        46 == SolvePart2(std::vector<std::string>{
+                  "seeds: 79 14 55 13",
+                  "",
+                  "seed-to-soil map:",
+                  "50 98 2",
+                  "52 50 48",
+                  "",
+                  "soil-to-fertilizer map:",
+                  "0 15 37",
+                  "37 52 2",
+                  "39 0 15",
+                  "",
+                  "fertilizer-to-water map:",
+                  "49 53 8",
+                  "0 11 42",
+                  "42 0 7",
+                  "57 7 4",
+                  "",
+                  "water-to-light map:",
+                  "88 18 7",
+                  "18 25 70",
+                  "",
+                  "light-to-temperature map:",
+                  "45 77 23",
+                  "81 45 19",
+                  "68 64 13",
+                  "",
+                  "temperature-to-humidity map:",
+                  "0 69 1",
+                  "1 0 69",
+                  "",
+                  "humidity-to-location map:",
+                  "60 56 37",
+                  "56 93 4"}));
+}
+
+TEST_CASE("Part 2 from file", "[day5]") {
+    // may not finish for the heat death of the universe
+    REQUIRE(178159714 == SolvePart2(GetPuzzleInput()));
+}
+
 void ElfMap::Add(const MapRange& range) { this->ranges.push_back(range); }
 
 int64_t ElfMap::Get(int64_t source) const {
@@ -184,6 +228,14 @@ PuzzleData GetPuzzleData(const std::vector<std::string>& lines) {
     result.seedNumbers =
         std::vector<int64_t>(std::begin(seedsView), std::end(seedsView));
 
+    // if I had chunk_view in 23...
+    //auto pair_view = result.seedNumbers | std::ranges::chunk_view(2);
+    //result.seedNumberRanges = std::vector<std::pair<int64_t, int64_t>>(std::begin(pair_view), std::end(pair_view));
+    for(int i = 0; i < result.seedNumbers.size(); i += 2)
+    {
+        result.seedNumberRanges.push_back(std::pair(result.seedNumbers[i], result.seedNumbers[i+1]));
+    }
+
     ElfMap currentMap;
     for (int64_t lineIndex = 3; lineIndex < lines.size(); ++lineIndex) {
         if (0 == lines[lineIndex].length()) {
@@ -241,7 +293,16 @@ int64_t Solve(const std::vector<std::string>& lines) {
     return result;
 }
 
-int64_t SolvePart2(const std::vector<std::string>& lines) { return 0; }
+int64_t SolvePart2(const std::vector<std::string>& lines) { 
+    PuzzleData data = GetPuzzleData(lines);
+    int64_t result = std::numeric_limits<int64_t>::max();
+    for (auto seedPair : data.seedNumberRanges) {
+        for(int seedNumber = seedPair.first; seedNumber < seedPair.first + seedPair.second; ++seedNumber ){
+            result = std::min(result, data.mapChain.Get(seedNumber));
+        }
+    }
+    return result;
+}
 
 std::vector<std::string> GetPuzzleInput() {
     // build is down one folder
