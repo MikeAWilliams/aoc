@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
+#include <execution>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -39,10 +40,16 @@ public:
     int64_t Get(int64_t firstSource) const;
 };
 
+struct SeedNumberRange {
+    int64_t start;
+    int64_t length;
+    int     index;
+};
+
 struct PuzzleData {
-    std::vector<int64_t> seedNumbers;
-    std::vector<std::pair<int64_t, int64_t>> seedNumberRanges;
-    MapChain             mapChain;
+    std::vector<int64_t>         seedNumbers;
+    std::vector<SeedNumberRange> seedNumberRanges;
+    MapChain                     mapChain;
 };
 
 int64_t                  Solve(const std::vector<std::string>& lines);
@@ -166,6 +173,12 @@ TEST_CASE("Part 2 easy", "[day5]") {
 
 TEST_CASE("Part 2 from file", "[day5]") {
     // may not finish for the heat death of the universe
+    auto puzzleData = GetPuzzleData(GetPuzzleInput());
+    // check the input
+    for (const auto& range : puzzleData.seedNumberRanges) {
+        std::cout << range.start << " " << range.length << " " << range.index
+                  << "\n";
+    }
     REQUIRE(178159714 == SolvePart2(GetPuzzleInput()));
 }
 
@@ -229,11 +242,12 @@ PuzzleData GetPuzzleData(const std::vector<std::string>& lines) {
         std::vector<int64_t>(std::begin(seedsView), std::end(seedsView));
 
     // if I had chunk_view in 23...
-    //auto pair_view = result.seedNumbers | std::ranges::chunk_view(2);
-    //result.seedNumberRanges = std::vector<std::pair<int64_t, int64_t>>(std::begin(pair_view), std::end(pair_view));
-    for(int i = 0; i < result.seedNumbers.size(); i += 2)
-    {
-        result.seedNumberRanges.push_back(std::pair(result.seedNumbers[i], result.seedNumbers[i+1]));
+    // auto pair_view = result.seedNumbers | std::ranges::chunk_view(2);
+    // result.seedNumberRanges = std::vector<std::pair<int64_t,
+    // int64_t>>(std::begin(pair_view), std::end(pair_view));
+    for (int i = 0, index = 0; i < result.seedNumbers.size(); i += 2, ++index) {
+        result.seedNumberRanges.push_back(SeedNumberRange{
+            result.seedNumbers[i], result.seedNumbers[i + 1], index});
     }
 
     ElfMap currentMap;
@@ -285,7 +299,7 @@ void DumpPuzzleDataToFileForDebug(
 
 int64_t Solve(const std::vector<std::string>& lines) {
     PuzzleData data = GetPuzzleData(lines);
-    //DumpPuzzleDataToFileForDebug(data, "../puzzle_out.txt");
+    // DumpPuzzleDataToFileForDebug(data, "../puzzle_out.txt");
     int64_t result = std::numeric_limits<int64_t>::max();
     for (auto seedNumber : data.seedNumbers) {
         result = std::min(result, data.mapChain.Get(seedNumber));
@@ -293,14 +307,27 @@ int64_t Solve(const std::vector<std::string>& lines) {
     return result;
 }
 
-int64_t SolvePart2(const std::vector<std::string>& lines) { 
-    PuzzleData data = GetPuzzleData(lines);
+int64_t SolvePart2(const std::vector<std::string>& lines) {
+    PuzzleData           data = GetPuzzleData(lines);
+    std::vector<int64_t> results(data.seedNumberRanges.size());
+    std::for_each(
+        std::execution::par, std::begin(data.seedNumberRanges),
+        std::end(data.seedNumberRanges), [&data, &results](auto& seedPair) {
+            int64_t result = std::numeric_limits<int64_t>::max();
+            for (int seedNumber = seedPair.start;
+                 seedNumber < seedPair.start + seedPair.length; ++seedNumber) {
+                result = std::min(result, data.mapChain.Get(seedNumber));
+            }
+            results[seedPair.index] = result;
+        });
     int64_t result = std::numeric_limits<int64_t>::max();
-    for (auto seedPair : data.seedNumberRanges) {
-        for(int seedNumber = seedPair.first; seedNumber < seedPair.first + seedPair.second; ++seedNumber ){
-            result = std::min(result, data.mapChain.Get(seedNumber));
-        }
+    int     index  = 0;
+    for (const auto& aResult : results) {
+        std::cout << index << " " << aResult << "\n";
+        result = std::min(result, aResult);
+        ++index;
     }
+
     return result;
 }
 
