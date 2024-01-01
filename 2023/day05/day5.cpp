@@ -311,7 +311,7 @@ int64_t SolvePart2(const std::vector<std::string>& lines) {
     PuzzleData           data = GetPuzzleData(lines);
     std::vector<int64_t> results(data.seedNumberRanges.size());
     std::for_each(
-        std::execution::par, std::begin(data.seedNumberRanges),
+        std::execution::par_unseq, std::begin(data.seedNumberRanges),
         std::end(data.seedNumberRanges), [&data, &results](auto& seedPair) {
             int64_t result = std::numeric_limits<int64_t>::max();
             for (int seedNumber = seedPair.start;
