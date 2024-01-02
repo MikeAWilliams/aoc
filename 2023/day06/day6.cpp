@@ -1,6 +1,12 @@
 // main.cpp
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <compare>
+#include <cstdlib>
+#include <limits>
+#include <numeric>
+#include <ranges>
+#include <string>
 #include <vector>
 
 struct RaceRecord {
@@ -15,6 +21,9 @@ struct RaceResult {
 };
 
 std::vector<RaceResult> FindPossibleRaces(const RaceRecord& record);
+int                     CountWinningRaces(
+                        const RaceRecord& record, const std::vector<RaceResult>& results);
+int SolvePart1(std::vector<RaceRecord>& puzzleInput);
 
 TEST_CASE("FindPossibleRaces", "[day6]") {
     auto result = FindPossibleRaces({7, 9});
@@ -28,11 +37,48 @@ TEST_CASE("FindPossibleRaces", "[day6]") {
     REQUIRE(result[6] == RaceResult{6, 6});
     REQUIRE(result[7] == RaceResult{7, 0});
 }
+TEST_CASE("CountWinningRaces", "[day6]") {
+    RaceRecord record{7, 9};
+    auto       races = FindPossibleRaces(record);
+    auto       wins  = CountWinningRaces(record, races);
+
+    REQUIRE(4 == wins);
+}
+TEST_CASE("Solve Part 1", "[day6]") {
+    std::vector<RaceRecord> puzzleInput{{7, 9}, {15, 40}, {30, 200}};
+    REQUIRE(288 == SolvePart1(puzzleInput));
+}
 
 std::vector<RaceResult> FindPossibleRaces(const RaceRecord& record) {
     std::vector<RaceResult> result;
     for (int holdTime = 0; holdTime <= record.time; ++holdTime) {
         result.emplace_back(holdTime, (record.time - holdTime) * holdTime);
+    }
+    return result;
+}
+
+int CountWinningRaces(
+    const RaceRecord& record, const std::vector<RaceResult>& results) {
+    // i'm not sure why I can't use a pipe operator outside a loop
+    // tells me it can't find the operator
+    // auto winningRange =
+    // results | std::ranges::views::filter([&record](const auto& aResult) {
+    // aResult.raceDistance > record.distance;
+    //});
+    // return std::ranges::size(winningRange);
+    int result = 0;
+    for (const auto& notNeeded :
+         results | std::ranges::views::filter([&record](const auto& aResult) {
+             return aResult.raceDistance > record.distance;
+         })) {
+        ++result;
+    }
+    return result;
+}
+int SolvePart1(std::vector<RaceRecord>& puzzleInput) {
+    int result = 1;
+    for (const auto& input : puzzleInput) {
+        result *= CountWinningRaces(input, FindPossibleRaces(input));
     }
     return result;
 }
