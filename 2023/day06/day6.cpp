@@ -45,8 +45,11 @@ TEST_CASE("CountWinningRaces", "[day6]") {
     REQUIRE(4 == wins);
 }
 TEST_CASE("Solve Part 1", "[day6]") {
-    std::vector<RaceRecord> puzzleInput{{7, 9}, {15, 40}, {30, 200}};
-    REQUIRE(288 == SolvePart1(puzzleInput));
+    std::vector<RaceRecord> exampleInput{{7, 9}, {15, 40}, {30, 200}};
+    REQUIRE(288 == SolvePart1(exampleInput));
+    std::vector<RaceRecord> puzzleInput{
+        {40, 233}, {82, 1011}, {84, 1110}, {92, 1487}};
+    REQUIRE(3316275 == SolvePart1(puzzleInput));
 }
 
 std::vector<RaceResult> FindPossibleRaces(const RaceRecord& record) {
@@ -76,6 +79,8 @@ int CountWinningRaces(
     return result;
 }
 int SolvePart1(std::vector<RaceRecord>& puzzleInput) {
+    // inelegent. Doesn't use algorithms or ranges. but I just want an answer
+    // right now
     int result = 1;
     for (const auto& input : puzzleInput) {
         result *= CountWinningRaces(input, FindPossibleRaces(input));
